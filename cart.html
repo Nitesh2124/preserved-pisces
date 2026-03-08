@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Cart - PRESERVED PISCES</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container nav">
+    <div class="logo">PRESERVED PIECE</div>
+    <nav>
+      <ul class="menu">
+        <li onclick="window.location.href='index.html'">Home</li>
+        <li onclick="window.location.href='index.html#about'">About Us</li>
+        <li onclick="window.location.href='index.html#categories'">Shop By Category</li>
+        <li onclick="window.location.href='index.html#contact'">Contact</li>
+      </ul>
+    </nav>
+    <div class="nav-icons">
+      <span onclick="window.location.href='index.html'">🔍</span>
+      <span onclick="window.location.href='profile.html'">👤</span>
+      <span id="cart-icon">🛒</span>
+    </div>
+  </div>
+</header>
+
+<!-- CART -->
+<section class="container">
+  <h2 class="section-title">Your Cart</h2>
+  <div id="cart-items"></div>
+  <div id="cart-total" style="margin:20px 0;font-weight:bold;"></div>
+  <button id="checkout-btn" class="explore">Proceed to Checkout</button>
+  <button onclick="window.location.href='index.html'" class="explore" style="margin-left:10px;background:#666;">Continue Shopping</button>
+</section>
+
+<script src="script.js"></script>
+<script>
+// Load cart on page load
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCartCount();
+  await updateCartDisplay();
+});
+
+// Update cart display with total
+async function updateCartDisplay() {
+  console.log('Loading cart display...');
+  try {
+    const response = await fetch('/api/cart');
+    console.log('Cart API response:', response);
+    const cart = await response.json();
+    console.log('Cart data:', cart);
+    const cartItemsDiv = document.getElementById('cart-items');
+    const cartTotalDiv = document.getElementById('cart-total');
+    
+    if (cart.length === 0) {
+      cartItemsDiv.innerHTML = '<p>Your cart is empty.</p>';
+      cartTotalDiv.innerHTML = '';
+      return;
+    }
+    
+    let totalAmount = 0;
+    const cartHtml = cart.map(item => {
+      const itemTotal = item.price * item.quantity;
+      totalAmount += itemTotal;
+      return `
+        <div class="cart-item">
+          <div>
+            <h4>${item.name}</h4>
+            <p>Price: Rs. ${item.price}.00</p>
+            <p>Quantity: ${item.quantity}</p>
+            <p>Total: Rs. ${itemTotal}.00</p>
+          </div>
+          <button class="remove-btn" data-product-id="${item.id}">Remove</button>
+        </div>
+      `;
+    }).join('');
+    
+    cartItemsDiv.innerHTML = cartHtml;
+    cartTotalDiv.innerHTML = `Grand Total: Rs. ${totalAmount}.00`;
+    
+    // Add remove event listeners
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const productId = btn.getAttribute('data-product-id');
+        console.log('Removing item:', productId);
+        try {
+          await fetch(`/api/cart/${productId}`, { method: 'DELETE' });
+          await updateCartDisplay();
+          await loadCartCount();
+        } catch (error) {
+          console.error('Error removing item:', error);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error loading cart:', error);
+    cartItemsDiv.innerHTML = '<p>Error loading cart. Please try again.</p>';
+  }
+}
+
+// Override cart icon to do nothing on cart page
+document.getElementById('cart-icon').addEventListener('click', (e) => {
+  e.preventDefault();
+  // Already on cart page
+});
+</script>
+
+</body>
+</html>

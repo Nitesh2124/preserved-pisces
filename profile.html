@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile - PRESERVED PISCES</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container nav">
+    <div class="logo">PRESERVED PIECE</div>
+    <nav>
+      <ul class="menu">
+        <li onclick="window.location.href='index.html'">Home</li>
+        <li onclick="window.location.href='index.html#about'">About Us</li>
+        <li onclick="window.location.href='index.html#categories'">Shop By Category</li>
+        <li onclick="window.location.href='index.html#contact'">Contact</li>
+      </ul>
+    </nav>
+    <div class="nav-icons">
+      <span onclick="window.location.href='index.html'">🔍</span>
+      <span id="user-icon">👤</span>
+      <span onclick="window.location.href='cart.html'">🛒</span>
+    </div>
+  </div>
+</header>
+
+<!-- PROFILE -->
+<div id="profile-root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+function Profile() {
+  const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem('currentUser')) || null);
+  const [showLogin, setShowLogin] = useState(!currentUser);
+  const [showRegister, setShowRegister] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [registerData, setRegisterData] = useState({ email: '', password: '' });
+
+  const handleLogin = async () => {
+    if (!loginData.email || !loginData.password) {
+      console.error('Please fill all fields');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setCurrentUser({ email: loginData.email });
+        localStorage.setItem('currentUser', JSON.stringify({ email: loginData.email }));
+        setShowLogin(false);
+        console.log('Login successful!');
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!registerData.email || !registerData.password) {
+      console.error('Please fill all fields');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registerData)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Registration successful! Please login.');
+        setShowRegister(false);
+        setShowLogin(true);
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('currentUser');
+    setShowLogin(true);
+    console.log('Logged out successfully');
+  };
+
+  return (
+    <section className="container">
+      <h2 className="section-title">My Profile</h2>
+
+      {currentUser ? (
+        <div id="profile-info">
+          <h3>Welcome back!</h3>
+          <p><strong>Email:</strong> {currentUser.email}</p>
+          <p><strong>Member since:</strong> {new Date().toLocaleDateString()}</p>
+          <h4>Order History</h4>
+          <p>No orders yet. Start shopping!</p>
+          <button className="explore" style={{background:'#dc2626'}} onClick={handleLogout}>Logout</button>
+        </div>
+      ) : (
+        <div>
+          {showLogin && (
+            <div id="login-form">
+              <h3>Login</h3>
+              <input
+                type="email"
+                placeholder="Email"
+                value={loginData.email}
+                onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={loginData.password}
+                onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+              />
+              <button className="explore" onClick={handleLogin}>Login</button>
+              <p>Don't have an account? <button style={{background:'none',border:'none',color:'#1d4ed8',cursor:'pointer'}} onClick={() => {setShowLogin(false); setShowRegister(true);}}>Register</button></p>
+            </div>
+          )}
+
+          {showRegister && (
+            <div id="register-form">
+              <h3>Register</h3>
+              <input
+                type="email"
+                placeholder="Email"
+                value={registerData.email}
+                onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={registerData.password}
+                onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+              />
+              <button className="explore" onClick={handleRegister}>Register</button>
+              <p>Already have an account? <button style={{background:'none',border:'none',color:'#1d4ed8',cursor:'pointer'}} onClick={() => {setShowRegister(false); setShowLogin(true);}}>Login</button></p>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+ReactDOM.render(<Profile />, document.getElementById('profile-root'));
+</script>
+
+</body>
+</html>
